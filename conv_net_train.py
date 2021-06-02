@@ -415,6 +415,7 @@ if __name__=="__main__":
     print "loading data...",
     x = cPickle.load(open("essays_mairesse.p","rb"))
     revs, W, W2, word_idx_map, vocab, mairesse = x[0], x[1], x[2], x[3], x[4], x[5]
+    # W = np.float32(W)
     print "data loaded!"
     mode= sys.argv[1]
     word_vectors = sys.argv[2]
@@ -457,7 +458,7 @@ if __name__=="__main__":
     results = []
     for i in r:
         datasets = make_idx_data_cv(revs, word_idx_map, mairesse, charged_words, i, attr, max_l=149, max_s=312, k=300, filter_h=3)
-
+        U = np.float32(U)
         perf, fscore = train_conv_net(datasets,
                               U,
                               ofile,

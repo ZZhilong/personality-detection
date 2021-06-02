@@ -7,6 +7,7 @@ import pandas as pd
 import csv
 import getpass
 
+from gensim.models.keyedvectors import KeyedVectors
 
 def build_data_cv(datafile, cv=10, clean_string=True):
     """
@@ -88,24 +89,34 @@ def load_bin_vec(fname, vocab):
     """
     Loads 300x1 word vecs from Google (Mikolov) word2vec
     """
+    model = KeyedVectors.load_word2vec_format(r'.\GoogleNews-vectors-negative300.bin', binary=True)
     word_vecs = {}
-    with open(fname, "rb") as f:
-        header = f.readline()
-        vocab_size, layer1_size = map(int, header.split())
-        binary_len = np.dtype(theano.config.floatX).itemsize * layer1_size
-        for line in xrange(vocab_size):
-            word = []
-            while True:
-                ch = f.read(1)
-                if ch == ' ':
-                    word = ''.join(word)
-                    break
-                if ch != '\n':
-                    word.append(ch)
-            if word in vocab:
-               word_vecs[word] = np.fromstring(f.read(binary_len), dtype=theano.config.floatX)
-            else:
-                f.read(binary_len)
+
+    for word in vocab.keys():
+        try:
+            vector = model[word]
+        except:
+            pass
+        else:
+            word_vecs[word] = np.array(vector, dtype=theano.config.floatX)
+    # with open(fname, "rb") as f:
+    #     header = f.readline()
+    #     vocab_size, layer1_size = map(int, header.split())
+    #     binary_len = np.dtype(theano.config.floatX).itemsize * layer1_size
+    #     for line in xrange(vocab_size):
+    #         word = []
+    #         while True:
+    #             ch = f.read(1)
+    #             if ch == ' ':
+    #                 word = ''.join(word)
+    #                 break
+    #             if ch != '\n':
+    #                 word.append(ch)
+    #         if word in vocab:
+    #             word_vecs[word] = np.fromstring(f.read(binary_len), dtype=theano.config.floatX)
+    #         else:
+    #             f.read(binary_len)
+    cPickle.dump(word_vecs, open("word_vecs_array.p", "wb"))
     return word_vecs
 
 def add_unknown_words(word_vecs, vocab, min_df=1, k=300):
@@ -169,6 +180,8 @@ if __name__=="__main__":
     print "max sentence length: " + str(max_l)
     print "loading word2vec vectors...",
     w2v = load_bin_vec(w2v_file, vocab)
+    # with open(r'word_vecs.p','rb') as fp:
+    #     w2v = cPickle.load(fp)
     print "word2vec loaded!"
     print "num words already in word2vec: " + str(len(w2v))
     add_unknown_words(w2v, vocab)
